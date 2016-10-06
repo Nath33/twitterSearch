@@ -4,7 +4,10 @@
   "description": "Recherche photo par hashtag twitter",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "twit-feed": "npm install -g | node index.js"
+  },
+  "bin": {
+    "twit-feed": "./index.js"
   },
   "repository": {
     "type": "git",
@@ -15,5 +18,10 @@
   "bugs": {
     "url": "https://github.com/Nath33/twitterSearch/issues"
   },
-  "homepage": "https://github.com/Nath33/twitterSearch#readme"
+  "homepage": "https://github.com/Nath33/twitterSearch#readme",
+  "dependencies": {
+    "commander": "^2.9.0",
+    "inquirer": "^1.2.1",
+    "twit": "^2.2.5"
+  }
 }
