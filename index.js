@@ -25,6 +25,7 @@ program
 	.option('-o, --sendMedia', 'Say some things with some things')
 	.option('-d, --hashtag, --limit', 'Search some things')
 	.option('-e, --save', 'Save some things')
+	//.option('-j, --delete', 'Delete some things')
 
 program.parse(process.argv)
 
@@ -119,7 +120,6 @@ if (program.send) {
 			console.error(err)
 		})
 }else if(program.hashtag){
-/*
 	var config = {
 	  consumer_key:         'hCMgwbuMtbzvm4DqygoXNz84T',
 	  consumer_secret:      'pzWmMsdrMayRqaLFdgSoGGBH759rdjREB82RmNX0Ux16RsVIkx',
@@ -130,12 +130,14 @@ if (program.send) {
 	var send = new Twit(config)
 
 	send.get('search/tweets', { q: program.args, count: program.rawArgs[5] }, function(err, data, response) {
-		var tweets = data.statuses.text
-		console.log(tweets)
+		for (var i = 0; i < program.rawArgs[5]; i++) {
+		var tweets = data.statuses[i].text
+		console.log("Tweet n° : " + (i+1) + " => " + tweets)
+		}
 	})
-*/
+
 }else if (program.save){
-/*
+
 	var config = {
 	  consumer_key:         'hCMgwbuMtbzvm4DqygoXNz84T',
 	  consumer_secret:      'pzWmMsdrMayRqaLFdgSoGGBH759rdjREB82RmNX0Ux16RsVIkx',
@@ -145,23 +147,25 @@ if (program.send) {
 
 	var send = new Twit(config)
 
-	send.get('search/tweets', { q: program.args, count: 10 }, function(err, data, response) {
-		var tweets = data.statuses.text
-		console.log(tweets)
+	send.get('search/tweets', { q: program.args, count: program.rawArgs[5] }, function(err, data, response) {
+		for (var i = 0; i < program.rawArgs[5]; i++) {
+			var tweets = data.statuses[i].text
+			console.log("Tweet n° : " + (i+1) + " => " + tweets)
+		}
+	}).then((tweets, data) => {
+		try{
+			fs.writeFile('tweet.txt', data, (err) => {
+				if (err)
+					throw err
+					console.log('Fichier écrit')
+			})
+		}catch (err){
+			console.log('ERR > ', err)
+		}
+	}).catch((err) => {
+		console.error(err)
 	})
 
-	const fs = require('fs')
-
-	try{
-		fs.writeFile('tweet.txt', tweets, (err) => {
-			if (err)
-				throw err
-				console.log('Fichier écrit')
-		})
-	}catch (err){
-		console.log('ERR > ', err)
-	}
-*/
 }else{
 	program.help()
 }
