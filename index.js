@@ -25,7 +25,8 @@ program
 	.option('-o, --sendMedia', 'Say some things with some things')
 	.option('-d, --hashtag, --limit', 'Search some things')
 	.option('-e, --save', 'Save some things')
-	//.option('-j, --delete', 'Delete some things')
+	.option('-j, --show', 'show some things')
+	.option('-s, --delete', 'delete some things')
 
 program.parse(process.argv)
 
@@ -42,21 +43,34 @@ if (program.send) {
 				message: 'Entrez votre access token secret',
 				name: 'secretToken'
 			},{
-				type: 'checkbox',
+				type: 'expand',
 				message: 'Voulez-vous sauvegarder vos token ?',
 				name: 'tokenToSave',
 				choices: [
-					'Token',
-					'Token secret'
-					]
+					{
+						key: 'O',
+						name: 'Oui',
+						value: 'yes'
+					},
+					{
+						key: 'N',
+						name: 'Non',
+						value: 'no'
+					}
+				]
 			}
 		]).then((answers) => {
-
+/*
+			if (answers.tokenToSave == 'yes') {
+				saveToken = true
+				saveSecretToken = true
+			}
+*/
 			var config = {
 			  consumer_key:         'hCMgwbuMtbzvm4DqygoXNz84T',
 			  consumer_secret:      'pzWmMsdrMayRqaLFdgSoGGBH759rdjREB82RmNX0Ux16RsVIkx',
-			  access_token:         token, //answers.token,
-			  access_token_secret:  secretToken //answers.secretToken
+			  access_token:         token,
+			  access_token_secret:  secretToken
 			}
 
 			var send = new Twit(config)
@@ -81,20 +95,28 @@ if (program.send) {
 				message: 'Entrez votre access token secret',
 				name: 'secretToken'
 			},{
-				type: 'checkbox',
+				type: 'expand',
 				message: 'Voulez-vous sauvegarder vos token ?',
 				name: 'tokenToSave',
 				choices: [
-					'Token',
-					'Token secret'
-					]
+					{
+						key: 'O',
+						name: 'Oui',
+						value: 'yes'
+					},
+					{
+						key: 'N',
+						name: 'Non',
+						value: 'no'
+					}
+				]
 			}
 		]).then((answers) => {
 			var config = {
 			  consumer_key:         'hCMgwbuMtbzvm4DqygoXNz84T',
 			  consumer_secret:      'pzWmMsdrMayRqaLFdgSoGGBH759rdjREB82RmNX0Ux16RsVIkx',
-			  access_token:         token, //answers.token,
-			  access_token_secret:  secretToken //answers.secretToken
+			  access_token:         token,
+			  access_token_secret:  secretToken
 			}
 		
 			var send = new Twit(config)
@@ -132,7 +154,7 @@ if (program.send) {
 	send.get('search/tweets', { q: program.args, count: program.rawArgs[5] }, function(err, data, response) {
 		for (var i = 0; i < program.rawArgs[5]; i++) {
 		var tweets = data.statuses[i].text
-		console.log("Tweet n° : " + (i+1) + " => " + tweets)
+			console.log("Tweet n° : " + (i+1) + " => " + tweets + "\n")
 		}
 	})
 
@@ -146,15 +168,16 @@ if (program.send) {
 	}
 
 	var send = new Twit(config)
+	var allTweets = ''
 
 	send.get('search/tweets', { q: program.args, count: program.rawArgs[5] }, function(err, data, response) {
 		for (var i = 0; i < program.rawArgs[5]; i++) {
 			var tweets = data.statuses[i].text
-			console.log("Tweet n° : " + (i+1) + " => " + tweets)
+			allTweets += 'Tweet n° : ' + (i+1) + ' => ' + tweets + '\n\r'
 		}
-	}).then((tweets, data) => {
+	}).then(() => {
 		try{
-			fs.writeFile('tweet.txt', data, (err) => {
+			fs.writeFile('tweet.txt', allTweets, (err) => {
 				if (err)
 					throw err
 					console.log('Fichier écrit')
@@ -164,6 +187,55 @@ if (program.send) {
 		}
 	}).catch((err) => {
 		console.error(err)
+	})
+
+}else if(program.show){
+	var config = {
+			  consumer_key:         'hCMgwbuMtbzvm4DqygoXNz84T',
+			  consumer_secret:      'pzWmMsdrMayRqaLFdgSoGGBH759rdjREB82RmNX0Ux16RsVIkx',
+			  access_token:         token,
+			  access_token_secret:  secretToken
+			}
+
+	var send = new Twit(config)
+	var options = { screen_name: 'BotTwit33', count: 100 }; ////////////////////////////////Ajuster a un autre compte
+
+	send.get('statuses/user_timeline', options , function(err, data) {
+		for (var i = 0; i < data.length ; i++) {
+			console.log('Tweet n° ' + i + ' => ' +data[i].text);
+		}
+
+	console.log(data)
+	})
+
+}else if(program.delete){
+	var config = {
+		  consumer_key:         'hCMgwbuMtbzvm4DqygoXNz84T',
+		  consumer_secret:      'pzWmMsdrMayRqaLFdgSoGGBH759rdjREB82RmNX0Ux16RsVIkx',
+		  access_token:         token,
+		  access_token_secret:  secretToken
+		}
+
+	var send = new Twit(config)
+
+
+	var options = { screen_name: 'BotTwit33', count: 100 };
+	send.get('statuses/user_timeline', options , function(err, data) {
+		for (var i = 0; i < data.length ; i++) {
+			console.log('Tweet n° ' + i + ' => ' +data[i].text);
+		}
+	}).then((data) => {
+		inquirer.prompt([
+		{
+			type: 'input',
+			message: 'Numéro de tweet',
+			name: 'id'
+		}
+		]).then((answers, data) => {
+			send.post('statuses/destroy/:id', { id:  data[answers.id].id_str}, function (err, data, response) {
+				console.log('delete')
+			})
+		})
 	})
 
 }else{
