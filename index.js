@@ -4,21 +4,32 @@
 // login : BotTwit
 // mdp : 33BotTwit
 
-
 //access_token:         '783980343607062529-FAb5oDD3OG1zJ2JAOk6XUc0Yo3FcK8Y',
 //access_token_secret:  'bFTTsnq2S06BXX76B1Sw2iQDNa0VrofNiUxHtAh4pl9ZB'
 
+/*
+
+TO DO
+
+Fonction sauvegarde token
+
+*/
+
+// Implementation des modules
 const program = require('commander')
 const inquirer = require('inquirer')
 const Twit = require('twit')
 const path = require('path')
 const fs = require('fs')
 
+// Variables
 var saveToken = false
 var saveSecretToken = false
 var token = '783980343607062529-FAb5oDD3OG1zJ2JAOk6XUc0Yo3FcK8Y'
 var secretToken = 'bFTTsnq2S06BXX76B1Sw2iQDNa0VrofNiUxHtAh4pl9ZB'
+var path_img = 'G:/Drive/Ingesup/Promo/Ing3/nodejs/twitterSearch' /////////////////////////////////////////////// Dossier de l'application
 
+// Programme
 program
 	.version('1.0.0')
 	.option('-n, --send', 'Say some things')
@@ -26,13 +37,14 @@ program
 	.option('-d, --hashtag, --limit', 'Search some things')
 	.option('-e, --save', 'Save some things')
 	.option('-j, --show', 'show some things')
-	.option('-s, --delete', 'delete some things')
+	.option('-s, --delete', 'delete some things') /// ERREUR DROIT
 
 program.parse(process.argv)
 
-if (program.send) {
+if (program.send) { ///////////////////////////////////////////////////////////////////////////////////////////// Envoi
 
 	if (program.args != '') {
+		// Questionnaire
 		inquirer.prompt([
 			{
 				type: 'input',
@@ -42,7 +54,7 @@ if (program.send) {
 				type: 'input',
 				message: 'Entrez votre access token secret',
 				name: 'secretToken'
-			},{
+			}/*,{
 				type: 'expand',
 				message: 'Voulez-vous sauvegarder vos token ?',
 				name: 'tokenToSave',
@@ -58,14 +70,9 @@ if (program.send) {
 						value: 'no'
 					}
 				]
-			}
+			}*/
 		]).then((answers) => {
-/*
-			if (answers.tokenToSave == 'yes') {
-				saveToken = true
-				saveSecretToken = true
-			}
-*/
+			// Connexion a l'API
 			var config = {
 			  consumer_key:         'hCMgwbuMtbzvm4DqygoXNz84T',
 			  consumer_secret:      'pzWmMsdrMayRqaLFdgSoGGBH759rdjREB82RmNX0Ux16RsVIkx',
@@ -74,7 +81,7 @@ if (program.send) {
 			}
 
 			var send = new Twit(config)
-
+			// Envoi du tweet avec program.args qui est l'argument contenu dans la ligne de commande
 			send.post('statuses/update', { status: program.args }, function(err, data, response) {
 				console.log('Message envoyé')
 			})
@@ -84,7 +91,7 @@ if (program.send) {
 	}else{
 		console.log('Erreur message vide')
 	}
-}else if(program.sendMedia){
+}else if(program.sendMedia){ ///////////////////////////////////////////////////////////////////////////////////////////// Envoi avec Media
 		inquirer.prompt([
 			{
 				type: 'input',
@@ -94,7 +101,7 @@ if (program.send) {
 				type: 'input',
 				message: 'Entrez votre access token secret',
 				name: 'secretToken'
-			},{
+			}/*,{
 				type: 'expand',
 				message: 'Voulez-vous sauvegarder vos token ?',
 				name: 'tokenToSave',
@@ -110,7 +117,7 @@ if (program.send) {
 						value: 'no'
 					}
 				]
-			}
+			}*/
 		]).then((answers) => {
 			var config = {
 			  consumer_key:         'hCMgwbuMtbzvm4DqygoXNz84T',
@@ -119,29 +126,45 @@ if (program.send) {
 			  access_token_secret:  secretToken
 			}
 		
-			var send = new Twit(config)
-			var b64content = fs.readFileSync('G:/Drive/Ingesup/Promo/Ing3/nodejs/twitterSearch/images/1.jpg', { encoding: 'base64' })
+			inquirer.prompt([
+			{
+				type: 'input',
+				message: 'Tweet :',
+				name: 'text'
+			},{
+				type: 'input',
+				message: 'Nom de l\'image (ex: monimage.jpg)',
+				name: 'img'
+			}
 
-			send.post('media/upload', { media_data: b64content }, function (err, data, response) {
-				var mediaIdStr = data.media_id_string
-				var altText = "Small flowers in a planter on a sunny balcony, blossoming."
-				var meta_params = { media_id: mediaIdStr }
 
-				send.post('media/metadata/create', meta_params, function (err, data, response) {
-					if (!err) {
-						var params = { status: program.args, media_ids: [mediaIdStr] }
+			]).then((answers) => {
 
-						send.post('statuses/update', params, function (err, data, response) {
-							console.log('Envoyé')
-						})
-					}
+				var send = new Twit(config)
+				// Chemin du media a envoyer
+				var b64content = fs.readFileSync(path_img+'/images/'+answers.img, { encoding: 'base64' })
+				// Envoi du tweet avec media
+				send.post('media/upload', { media_data: b64content }, function (err, data, response) {
+					var mediaIdStr = data.media_id_string
+					var meta_params = { media_id: mediaIdStr }
+
+					send.post('media/metadata/create', meta_params, function (err, data, response) {
+						if (!err) {
+							var params = { status: answers.text, media_ids: [mediaIdStr] }
+
+							send.post('statuses/update', params, function (err, data, response) {
+								console.log('Envoyé')
+							})
+						}
+					})
 				})
+
 			})
 
 		}).catch((err) => {
 			console.error(err)
 		})
-}else if(program.hashtag){
+}else if(program.hashtag){ ///////////////////////////////////////////////////////////////////////////////////////////// Recherche
 	var config = {
 	  consumer_key:         'hCMgwbuMtbzvm4DqygoXNz84T',
 	  consumer_secret:      'pzWmMsdrMayRqaLFdgSoGGBH759rdjREB82RmNX0Ux16RsVIkx',
@@ -150,7 +173,7 @@ if (program.send) {
 	}
 
 	var send = new Twit(config)
-
+	// Recherche
 	send.get('search/tweets', { q: program.args, count: program.rawArgs[5] }, function(err, data, response) {
 		for (var i = 0; i < program.rawArgs[5]; i++) {
 		var tweets = data.statuses[i].text
@@ -158,7 +181,7 @@ if (program.send) {
 		}
 	})
 
-}else if (program.save){
+}else if(program.save){ ///////////////////////////////////////////////////////////////////////////////////////////// Sauvegarder n tweet dans un fichier
 
 	var config = {
 	  consumer_key:         'hCMgwbuMtbzvm4DqygoXNz84T',
@@ -169,18 +192,18 @@ if (program.send) {
 
 	var send = new Twit(config)
 	var allTweets = ''
-
+	// Recherche des tweet selon un maximum 'program.rawArgs[5]' 5 -> 5eme argumant
 	send.get('search/tweets', { q: program.args, count: program.rawArgs[5] }, function(err, data, response) {
 		for (var i = 0; i < program.rawArgs[5]; i++) {
 			var tweets = data.statuses[i].text
+			// Formalistation des tweets
 			allTweets += 'Tweet n° : ' + (i+1) + ' => ' + tweets + '\n\r'
 		}
 	}).then(() => {
 		try{
+			//Ecriture dans le fichier
 			fs.writeFile('tweet.txt', allTweets, (err) => {
-				if (err)
-					throw err
-					console.log('Fichier écrit')
+				console.log('Fichier écrit')
 			})
 		}catch (err){
 			console.log('ERR > ', err)
@@ -189,7 +212,7 @@ if (program.send) {
 		console.error(err)
 	})
 
-}else if(program.show){
+}else if(program.show){ ///////////////////////////////////////////////////////////////////////////////////////////// Afficher 100 premiers tweet d'un compte
 	var config = {
 			  consumer_key:         'hCMgwbuMtbzvm4DqygoXNz84T',
 			  consumer_secret:      'pzWmMsdrMayRqaLFdgSoGGBH759rdjREB82RmNX0Ux16RsVIkx',
@@ -198,17 +221,24 @@ if (program.send) {
 			}
 
 	var send = new Twit(config)
-	var options = { screen_name: 'BotTwit33', count: 100 }; ////////////////////////////////Ajuster a un autre compte
 
-	send.get('statuses/user_timeline', options , function(err, data) {
-		for (var i = 0; i < data.length ; i++) {
-			console.log('Tweet n° ' + i + ' => ' +data[i].text);
+		inquirer.prompt([
+		{
+			type: 'input',
+			message: 'Nom du compte',
+			name: 'name'
 		}
+		]).then((answers, data) => {
+			var options = { screen_name: answers.name, count: 100 };
+			// Recherche avec answer.name qui sera le nom mis dans inquirer
+			send.get('statuses/user_timeline', options , function(err, data) {
+				for (var i = 0; i < data.length ; i++) {
+					console.log('Tweet n° ' + (i+1) + ' => ' + data[i].text);
+				}
+			})
+		})
 
-	console.log(data)
-	})
-
-}else if(program.delete){
+}else if(program.delete){ ///////////////////////////////////////////////////////////////////////////////////////////// Suppression d'un tweet
 	var config = {
 		  consumer_key:         'hCMgwbuMtbzvm4DqygoXNz84T',
 		  consumer_secret:      'pzWmMsdrMayRqaLFdgSoGGBH759rdjREB82RmNX0Ux16RsVIkx',
@@ -218,26 +248,27 @@ if (program.send) {
 
 	var send = new Twit(config)
 
-
 	var options = { screen_name: 'BotTwit33', count: 100 };
+	// Afficher les 100 premiers tweet du compte BotTwit33
 	send.get('statuses/user_timeline', options , function(err, data) {
 		for (var i = 0; i < data.length ; i++) {
-			console.log('Tweet n° ' + i + ' => ' +data[i].text);
+			console.log('Tweet n° ' + i + ' => ' + data[i].text);    /////////////////Recherche de tous les tweets suivant 
 		}
-	}).then((data) => {
+	
 		inquirer.prompt([
 		{
 			type: 'input',
 			message: 'Numéro de tweet',
 			name: 'id'
 		}
-		]).then((answers, data) => {
+		]).then((answers) => {
+			// Supprimer le tweet selectionner dans l'inquirer
 			send.post('statuses/destroy/:id', { id:  data[answers.id].id_str}, function (err, data, response) {
 				console.log('delete')
 			})
 		})
 	})
 
-}else{
+}else{ ///////////////////////////////////////////////////////////////////////////////////////////// Help
 	program.help()
 }
