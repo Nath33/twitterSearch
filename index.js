@@ -7,35 +7,26 @@
 //access_token:         '783980343607062529-FAb5oDD3OG1zJ2JAOk6XUc0Yo3FcK8Y',
 //access_token_secret:  'bFTTsnq2S06BXX76B1Sw2iQDNa0VrofNiUxHtAh4pl9ZB'
 
-/*
-
-TO DO
-
-Fonction sauvegarde token
-
-*/
-
 // Implementation des modules
 const program = require('commander')
 const inquirer = require('inquirer')
 const Twit = require('twit')
 const path = require('path')
 const fs = require('fs')
+const db = require('sqlite')
 
 // Variables
-var saveToken = false
-var saveSecretToken = false
 var path_img = 'G:/Drive/Ingesup/Promo/Ing3/nodejs/twitterSearch' // Dossier de l'application
 
 // Programme
 program
 	.version('1.0.0')
-	.option('-n, --conApi', 'Say some things')
-	.option('-o, --conApiMedia', 'Say some things with some things')
+	.option('-n, --send', 'Say some things')
+	.option('-o, --sendMedia', 'Say some things with some things')
 	.option('-d, --hashtag, --limit', 'Search some things')
 	.option('-e, --save', 'Save some things')
-	.option('-j, --show', 'show some things')
-	.option('-s, --delete', 'delete some things')
+	.option('-j, --show', 'Show some things')
+	.option('-s, --delete', 'Delete some things')
 
 program.parse(process.argv)
 
@@ -56,7 +47,6 @@ if (program.conApi) { ///////////////////////////////////// Envoi
 }
 
 function connexion(){
-
 	var token = '783980343607062529-FAb5oDD3OG1zJ2JAOk6XUc0Yo3FcK8Y'
 	var secretToken = 'bFTTsnq2S06BXX76B1Sw2iQDNa0VrofNiUxHtAh4pl9ZB'
 
@@ -128,11 +118,9 @@ function sendTweetMedia(){
 			conApi.post('media/upload', { media_data: b64content }, function (err, data, response) {
 				var mediaIdStr = data.media_id_string
 				var meta_params = { media_id: mediaIdStr }
-
 				conApi.post('media/metadata/create', meta_params, function (err, data, response) {
 					if (!err) {
 						var params = { status: answers.text, media_ids: [mediaIdStr] }
-
 						conApi.post('statuses/update', params, function (err, data, response) {
 							console.log('Envoyé')
 						})
@@ -242,7 +230,27 @@ function deleteTweet(){
 			// Supprimer le tweet selectionner dans l'inquirer
 			conApi.post('statuses/destroy/:id', { id:  data[answers.id].id_str}, function (err, data, response) {
 				console.log('delete')
+			}).then(() => {
+				saveBdd(data[answers.id].id_str)
 			})
 		})
 	})
+}
+
+function saveBdd(id){
+	db.open('deleteTweetBdd.db').then(() => {
+		db.run("CREATE TABLE IF NOT EXISTS deleteTweet (idTweet, time)")
+	})
+	db.open('deleteTweet.db').then(() => {
+		return db.run('CREATE TABLE IF NOT EXISTS deleteTweet (idTweet, time)')
+		}).then(() => {
+			var date = new Date()
+			var fullDate = date.getDate() + '/' + (date.getMonth() + 1) + '/' + date.getFullYear()
+			db.run('INSERT INTO deleteTweet(idTweet, time) VALUES (?, ?)', id, fullDate)
+			db.all('SELECT * FROM deleteTweet').then((result) => {
+				console.log(result)
+			})
+		}).catch((err) => { 
+			console.error('ERR> ', err)
+		})
 }
