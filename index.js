@@ -21,31 +21,44 @@ var path_img = 'G:/Drive/Ingesup/Promo/Ing3/nodejs/twitterSearch' // Dossier de 
 // Programme
 program
 	.version('1.0.0')
-	.option('-n, --send', 'Say some things')
+	.option('-n, --send', 'Say some things (ex: twit-feed -n "ma_recherche")')
 	.option('-o, --sendMedia', 'Say some things with some things')
-	.option('-d, --hashtag, --limit', 'Search some things')
+	.option('-d, --search, --limit', 'Search some things with limit')
 	.option('-e, --save', 'Save some things')
 	.option('-j, --show', 'Show some things')
 	.option('-s, --delete', 'Delete some things')
+	.option('-a, --showFile', 'Show file')
+	.option('-b, --showBdd', 'Show Bdd')
+	.option('-c, --deleteFile', 'Delete file')
+	.option('-f, --deleteBdd', 'Delete Bdd')
 
 program.parse(process.argv)
 
-if (program.conApi) { ///////////////////////////////////// Envoi
+if (program.send) { ///////////////////////////////////// Envoi
 	sendTweet()
-}else if(program.conApiMedia){ //////////////////////////// Envoi avec Media
+}else if(program.sendMedia){ //////////////////////////// Envoi avec Media
 	sendTweetMedia()
-}else if(program.hashtag){ //////////////////////////////// Recherche
+}else if(program.search){ /////////////////////////////// Recherche
 	searchTweet()
-}else if(program.save){ /////////////////////////////////// Sauvegarder n tweet dans un fichier
+}else if(program.save){ ///////////////////////////////// Sauvegarder n tweet dans un fichier
 	saveTweet()
-}else if(program.show){ /////////////////////////////////// Afficher 100 premiers tweet d'un compte
+}else if(program.show){ ///////////////////////////////// Afficher 100 premiers tweet d'un compte
 	showTweet()
-}else if(program.delete){ ///////////////////////////////// Suppression d'un tweet
+}else if(program.delete){ /////////////////////////////// Suppression d'un tweet
 	deleteTweet()
-}else{ //////////////////////////////////////////////////// Help
+}else if(program.showFile){ ///////////////////////////// Afficher le fichier
+	showFile()
+}else if(program.showBdd){ ////////////////////////////// Afficher BDD
+	showBdd()
+}else if(program.deleteFile){ /////////////////////////// Supprime le fichier
+	deleteFile()
+}else if(program.deleteBdd){ //////////////////////////// Supprime BDD
+	deleteBdd()
+}else{ ////////////////////////////////////////////////// Help
 	program.help()
 }
 
+// Connexion
 function connexion(){
 	var token = '783980343607062529-FAb5oDD3OG1zJ2JAOk6XUc0Yo3FcK8Y'
 	var secretToken = 'bFTTsnq2S06BXX76B1Sw2iQDNa0VrofNiUxHtAh4pl9ZB'
@@ -141,7 +154,7 @@ function searchTweet(){
 	inquirer.prompt([
 		{
 			type: 'input',
-			message: 'Tweet :',
+			message: 'Recherche :',
 			name: 'text'
 		},{
 			type: 'input',
@@ -164,7 +177,7 @@ function saveTweet(){
 	inquirer.prompt([
 		{
 			type: 'input',
-			message: 'Tweet :',
+			message: 'Recherche :',
 			name: 'text'
 		},{
 			type: 'input',
@@ -238,19 +251,45 @@ function deleteTweet(){
 }
 
 function saveBdd(id){
-	db.open('deleteTweetBdd.db').then(() => {
-		db.run("CREATE TABLE IF NOT EXISTS deleteTweet (idTweet, time)")
-	})
 	db.open('deleteTweet.db').then(() => {
-		return db.run('CREATE TABLE IF NOT EXISTS deleteTweet (idTweet, time)')
-		}).then(() => {
-			var date = new Date()
-			var fullDate = date.getDate() + '/' + (date.getMonth() + 1) + '/' + date.getFullYear()
-			db.run('INSERT INTO deleteTweet(idTweet, time) VALUES (?, ?)', id, fullDate)
-			db.all('SELECT * FROM deleteTweet').then((result) => {
-				console.log(result)
-			})
-		}).catch((err) => { 
-			console.error('ERR> ', err)
+		return db.run('CREATE TABLE IF NOT EXISTS deleteTweet (idTweet, time)') // Créer la table si elle n'est pas déjà créer
+	}).then(() => {
+		var date = new Date()
+		var fullDate = date.getDate() + '/' + (date.getMonth() + 1) + '/' + date.getFullYear() // Formate la date
+		db.run('INSERT INTO deleteTweet(idTweet, time) VALUES (?, ?)', id, fullDate) // Insert dans la table deletetweet
+	}).catch((err) => { 
+		console.error('ERR> ', err)
+	})
+}
+
+function showFile(){
+	fs.readFile('tweet.txt', 'utf8', (err, data) => { // Lis le fichier tweet.txt
+		if (err)
+			throw err
+		console.log('Donnée du fichier : \n' + data)
+	})
+}
+
+function showBdd(){
+	db.open('deleteTweet.db').then(() => {
+	db.all('SELECT * FROM deleteTweet').then((result) => { // Select tous dans la table deleteTweet
+			console.log(result)
 		})
+	}).catch((err) => { 
+		console.error('ERR> ', err)
+	})
+}
+
+function deleteFile(){
+	fs.unlink('tweet.txt', (err) => { // Supprime le fichier tweet.txt
+		if (err) throw err
+		console.log('Fichier supprimé')
+	})
+}
+
+function deleteBdd(){
+	fs.unlink('deleteTweet.db', (err) => { // Supprime le fichier deletetweet.db
+		if (err) throw err
+		console.log('Base de donnée supprimé');
+	})
 }
